@@ -1,28 +1,34 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
 public class CheckListManager : MonoBehaviour
 {
+    public static CheckListManager Instance; 
+
     [System.Serializable]
     public class ChecklistItem
     {
         public string itemName;
         public bool obtained;
+        public GameObject ObjetoColeccionable; // Objeto en la escena (coleccionable)
         [HideInInspector] public TextMeshProUGUI uiText; // referencia al texto en la UI
-        [HideInInspector] public Button button; // referencia al botón
     }
 
     [Header("UI References")]
     public GameObject panel;          // El panel que contiene la lista
-    public GameObject itemPrefab;     // Prefab del botón del ítem (con TMP como hijo)
+    public GameObject itemPrefab;     // Prefab de un texto (NO botón)
     public Transform listContainer;   // Donde se instanciarán los ítems
     public TextMeshProUGUI titleText; // Texto del título ("Lista")
 
     [Header("Datos")]
     public string listTitle = "Lista"; // Nombre que aparecerá arriba
     public List<ChecklistItem> items = new List<ChecklistItem>();
+
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
 
     void Start()
     {
@@ -35,18 +41,20 @@ public class CheckListManager : MonoBehaviour
         {
             GameObject newItem = Instantiate(itemPrefab, listContainer);
 
-            // Buscar el texto dentro del botón
+            // Buscar el texto dentro del prefab
             TextMeshProUGUI textComponent = newItem.GetComponentInChildren<TextMeshProUGUI>();
             textComponent.text = item.itemName;
             item.uiText = textComponent;
 
-            // Guardar referencia al botón
-            Button btn = newItem.GetComponent<Button>();
-            item.button = btn;
+            // Sin botón, solo texto
 
-            // Capturar el nombre del item para el listener
-            string capturedName = item.itemName;
-            btn.onClick.AddListener(() => MarkAsObtained(capturedName));
+            // Vincular con objeto en la escena
+            if (item.ObjetoColeccionable != null)
+            {
+                Coleccionable col = item.ObjetoColeccionable.GetComponent<Coleccionable>();
+                if (col != null)
+                    col.itemName = item.itemName; // Forzamos que coincidan
+            }
         }
 
         panel.SetActive(false); // empieza oculto
@@ -81,10 +89,6 @@ public class CheckListManager : MonoBehaviour
             item.obtained = true;
             item.uiText.text = $"<s>{item.itemName}</s>"; // tachado
             item.uiText.color = Color.gray;              // opcional: gris
-
-            // Desactivar el botón para que no se vuelva a hacer clic
-            if (item.button != null)
-                item.button.interactable = false;
         }
     }
 }

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 605b9ae4bb06b9b42b3b2b55028739ba, type: 3}
+  m_Name: NewConversation
+  m_EditorClassIdentifier: 
+  conversationLines:
+  - speakerName: Baggy
+    dialogueLine: "\xBFOtra vez te quedaste dormido? No importa, ahora debo ayudarte
+      a empacar."
+  - speakerName: Bob
+    dialogueLine: "Gracias baggy, \xBFQue har\xEDa sin ti?"
+  - speakerName: Baggy
+    dialogueLine: "No hay de qu\xE9, despues de todo soy tu asistente"
+  - speakerName: Baggy
+    dialogueLine: Debo cargar el celular con mis sensores...
+  - speakerName: Baggy
+    dialogueLine: "Mmmm.... creo que en el primer piso esta el ba\xF1o"
+  - speakerName: Baggy
+    dialogueLine: "\xBFPor que esta casa es tan grande?"
+  - speakerName: Baggy
+    dialogueLine: "R\xE1pido, el tiempo se agota!"

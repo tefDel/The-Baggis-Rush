@@ -26,6 +26,9 @@ public class CheckListManager : MonoBehaviour
     public string listTitle = "Lista";
     public List<ChecklistItem> items = new List<ChecklistItem>();
 
+    [Header("Indicador Tecla")]
+    public GameObject tabImagen; 
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -56,6 +59,10 @@ public class CheckListManager : MonoBehaviour
 
         panel.SetActive(false);
 
+        // Mostrar imagen de Tab al inicio
+        if (tabImagen != null)
+            tabImagen.SetActive(true);
+
         // CLAVE: Inicializar línea con primer objetivo
         if (lineScript != null)
         {
@@ -69,17 +76,27 @@ public class CheckListManager : MonoBehaviour
         // Toggle panel con Tab
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            panel.SetActive(!panel.activeSelf);
+            bool nuevoEstado = !panel.activeSelf;
+            panel.SetActive(nuevoEstado);
 
-            if (panel.activeSelf)
+            // Mostrar u ocultar cursor
+            if (nuevoEstado)
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
+
+                // Ocultar imagen de Tab cuando panel está abierto
+                if (tabImagen != null)
+                    tabImagen.SetActive(false);
             }
             else
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
+
+                // Volver a mostrar imagen de Tab cuando panel está cerrado
+                if (tabImagen != null)
+                    tabImagen.SetActive(true);
             }
         }
     }

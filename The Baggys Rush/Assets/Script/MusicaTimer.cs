@@ -1,44 +1,123 @@
-using UnityEngine;
-
+ï»¿using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 public class MusicTimer : MonoBehaviour
 {
-    public AudioSource musica;     
-    public float tiempoLimite = 45f;  
-    public float tiempoAcelerar = 20f; 
-    public float pitchMax = 1.5f;     
+    [Header("MÃºsica")]
+    public AudioSource musica;
+    public float tiempoLimite = 60f; // empieza en 1 minuto
+    public float tiempoAcelerar = 20f;
+    public float pitchMax = 1.5f;
+
+    [Header("UI Timer")]
+    public TextMeshProUGUI textoTimer;
+    public Color colorNormal = Color.white;
+    public Color colorCritico = Color.red;
+    public float parpadeoVelocidad = 5f;
+    public float tiempoParpadeo = 5f;
+
+    [Header("Mensajes Fin")]
+    public GameObject panelMensajes;
+    public TextMeshProUGUI mensajeUI;
+    public string msgPerder = "Uy... perdiste tu vuelo. :( \nÂ¿Reintentar?";
+
     private float tiempoRestante;
+    private bool isRunning = true;
     public DialogoManager dialogueManager;
+
     void Start()
     {
-        tiempoRestante = tiempoLimite;
-        musica.loop = true;
-        musica.pitch = 1f; // velocidad normal
-        musica.Play();
+        ResetTimer();
+        if (musica != null)
+        {
+            musica.loop = true;
+            musica.pitch = 1f;
+            musica.Play();
+        }
+        ActualizarTexto();
     }
 
     void Update()
     {
-        // Reducimos el tiempo
-        tiempoRestante -= Time.deltaTime;
+        if (!isRunning) return;
 
-        // Si estamos dentro del rango de aceleración
-        if (tiempoRestante <= tiempoAcelerar)
+        tiempoRestante -= Time.deltaTime;
+        if (tiempoRestante < 0f) tiempoRestante = 0f;
+
+        if (tiempoRestante <= tiempoAcelerar && musica != null)
         {
             float progreso = 1f - (tiempoRestante / tiempoAcelerar);
             musica.pitch = Mathf.Lerp(1f, pitchMax, progreso);
         }
 
-        // Cuando el tiempo se acaba
-        if (tiempoRestante <= 0)
+        ActualizarTexto();
+
+        if (tiempoRestante <= 0f)
         {
-            tiempoRestante = 0;
-            // Aquí puedes poner que termine el juego, se pierda, etc.
-            Debug.Log("¡Tiempo terminado!");
-            // cerrar diálogo si está abierto
-            if (dialogueManager != null)
+            isRunning = false;
+            Debug.Log("[MusicTimer] Tiempo terminado.");
+
+            // mensaje de derrota
+            if (panelMensajes != null && mensajeUI != null)
             {
+                panelMensajes.SetActive(true);
+                mensajeUI.text = msgPerder;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+            }
+
+            // si quieres parar mÃºsica
+            if (musica != null) musica.Stop();
+
+            if (dialogueManager != null)
                 dialogueManager.SendMessage("EndConversation");
+        }
+    }
+
+    void ActualizarTexto()
+    {
+        if (textoTimer == null) return;
+
+        int minutos = Mathf.FloorToInt(tiempoRestante / 60f);
+        int segundos = Mathf.FloorToInt(tiempoRestante % 60f);
+
+        // siempre mostramos TIEMPO RESTANTE en pantalla
+        textoTimer.text = string.Format("{0:00}:{1:00}", minutos, segundos);
+
+        if (tiempoRestante <= tiempoAcelerar)
+        {
+            textoTimer.color = colorCritico;
+            if (tiempoRestante <= tiempoParpadeo)
+            {
+                float alpha = Mathf.Abs(Mathf.Sin(Time.time * parpadeoVelocidad));
+                textoTimer.color = new Color(colorCritico.r, colorCritico.g, colorCritico.b, alpha);
             }
         }
+        else
+        {
+            textoTimer.color = colorNormal;
+        }
+    }
+
+    // Getters pÃºblicos
+    public float GetTiempoRestante() => tiempoRestante;
+    public float GetTiempoTranscurrido() => Mathf.Clamp(tiempoLimite - tiempoRestante, 0f, tiempoLimite);
+
+    // Control del timer
+    public void StartTimer() { isRunning = true; }
+    public void PauseTimer() { isRunning = false; }
+    public void ResetTimer()
+    {
+        tiempoRestante = tiempoLimite;
+        isRunning = true;
+        if (musica != null) musica.pitch = 1f;
+        ActualizarTexto();
+    }
+
+    public void ReiniciarEscena()
+    {
+        Scene currentScene = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(currentScene.name);
     }
 }

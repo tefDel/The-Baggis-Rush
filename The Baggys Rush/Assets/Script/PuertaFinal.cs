@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class PuertaFinal : MonoBehaviour
 {
@@ -63,6 +64,10 @@ public class PuertaFinal : MonoBehaviour
                 puedeAbrir = true;
 
                 // Tiempo de completado
+                // 1) Pausar timer antes de leer tiempo
+                if (musicTimer != null) musicTimer.PauseTimer();
+
+                // 2) Obtener tiempo final
                 float tiempoTranscurrido = musicTimer != null ? musicTimer.GetTiempoTranscurrido() : 0f;
                 float tiempoRestante = musicTimer != null ? musicTimer.GetTiempoRestante() : 0f;
 
@@ -70,7 +75,15 @@ public class PuertaFinal : MonoBehaviour
 
                 string tiempoTexto = FormatearTiempo(tiempoTranscurrido);
 
+                // 3) Mostrar mensaje de victoria
                 MostrarMensaje(msgVictoria + tiempoTexto, 10f);
+
+                // 4) Guardar en GameUIManager (esto alimenta el ranking)
+                GameDataManager.Instance.GuardarResultado(GameDataManager.Instance.nombreJugador, tiempoTranscurrido);
+
+
+                // 5) Volver al menú
+                StartCoroutine(RegresarAlMenu());
             }
         }
     }
@@ -113,4 +126,9 @@ public class PuertaFinal : MonoBehaviour
         return string.Format("{0:00}:{1:00}", minutos, segundos);
     }
 
+    private IEnumerator RegresarAlMenu()
+    {
+        yield return new WaitForSeconds(1f); // Espera 3 seg para que el jugador vea el mensaje
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu Inicial"); // Reemplaza "Menu" con el nombre real de tu escena
+    }
 }

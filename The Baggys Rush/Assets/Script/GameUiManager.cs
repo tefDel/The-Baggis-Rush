@@ -1,100 +1,121 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 
 public class GameUIManager : MonoBehaviour
 {
-    [Header("Panels (Menú Principal)")]
+    [Header("Paneles")]
+    public GameObject panelInicio;
+    public GameObject panelNumeroJugadores;
     public GameObject panelNombreJugador;
-    public GameObject panelJuego;
-    public GameObject panelFinPartida;
     public GameObject panelControles;
+    public GameObject panelPodio;
 
     [Header("UI Elements")]
+    public TMP_InputField inputNumeroJugadores;
     public TMP_InputField inputNombre;
-    public TextMeshProUGUI textoTimer;
-    public TextMeshProUGUI textoResultado;
+    public TextMeshProUGUI textoPodio;
+    public TextMeshProUGUI textoJugadorActual;
 
-    [Header("Botones")]
-    public Button botonIniciar;
-    public Button botonConfirmarNombre;
-    public Button botonControles;
-    public Button botonCerrarControles;
-    public Button botonReintentar;
-
-    private float tiempo;
-    private bool jugando;
-
-    // Datos globales (estáticos, persisten entre escenas)
-    public static string nombreJugador;
-    public static float mejorTiempo;
+    private GameDataManager data;
 
     void Start()
     {
-        // Solo si estamos en el menú principal
-        if (SceneManager.GetActiveScene().name != "SampleScene")
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        data = GameDataManager.Instance;
+        if (data.totalJugadores == 0)
         {
-            panelNombreJugador.SetActive(false);
-            panelJuego.SetActive(false);
-            panelFinPartida.SetActive(false);
-            panelControles.SetActive(false);
-
-            botonIniciar.onClick.AddListener(MostrarPanelNombre);
-            botonConfirmarNombre.onClick.AddListener(ConfirmarNombreYCargarJuego);
-            botonControles.onClick.AddListener(() => panelControles.SetActive(true));
-            botonCerrarControles.onClick.AddListener(() => panelControles.SetActive(false));
+            MostrarPanelInicio();
+        }
+        else if (data.jugadoresRegistrados >= data.totalJugadores)
+        {
+            MostrarPodio();
         }
         else
         {
-            // Estamos en SampleScene → iniciar juego
-            panelJuego.SetActive(true);
-            panelFinPartida.SetActive(false);
-            jugando = true;
-            tiempo = 0f;
+            MostrarPanelNombre();
         }
-
-        if (botonReintentar != null)
-            botonReintentar.onClick.AddListener(Reiniciar);
     }
 
-    void Update()
+    public void BotonIniciarJuego()
     {
-        if (jugando && SceneManager.GetActiveScene().name == "SampleScene")
+        panelInicio.SetActive(false);
+        panelNumeroJugadores.SetActive(true);
+        inputNumeroJugadores.text = "";
+    }
+
+    public void ConfirmarNumeroJugadores()
+    {
+        if (int.TryParse(inputNumeroJugadores.text, out int numero) && numero >= 2 && numero <= 10)
         {
-            tiempo += Time.deltaTime;
-            textoTimer.text = "Tiempo: " + tiempo.ToString("F2") + " s";
+            data.totalJugadores = numero;
+            data.jugadoresRegistrados = 0;
+            data.ranking.Clear();
+
+            MostrarPanelNombre();
         }
+    }
+
+    public void MostrarPanelInicio()
+    {
+        OcultarTodosLosPaneles();
+        panelInicio.SetActive(true);
     }
 
     public void MostrarPanelNombre()
     {
+        OcultarTodosLosPaneles();
         panelNombreJugador.SetActive(true);
+
+        int jugadorActual = data.jugadoresRegistrados + 1;
+        textoJugadorActual.text = $"Jugador {jugadorActual} de {data.totalJugadores}";
+        inputNombre.text = "";
     }
 
     public void ConfirmarNombreYCargarJuego()
     {
-        nombreJugador = inputNombre.text;
-        if (string.IsNullOrEmpty(nombreJugador))
-            nombreJugador = "Jugador";
+        data.nombreJugador = string.IsNullOrEmpty(inputNombre.text.Trim())
+            ? "Jugador " + (data.jugadoresRegistrados + 1)
+            : inputNombre.text.Trim();
 
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene("SampleScene"); // 👉 Normal, no aditivo
     }
 
-    // Llamar esta función desde SampleScene cuando el jugador termine
-    public void TerminarPartida()
+    public void MostrarPodio()
     {
-        jugando = false;
-        panelJuego.SetActive(false);
-        panelFinPartida.SetActive(true);
+        OcultarTodosLosPaneles();
+        panelPodio.SetActive(true);
 
-        mejorTiempo = tiempo;
-        textoResultado.text = nombreJugador + " - Tiempo récord: " + mejorTiempo.ToString("F2") + " s";
+        textoPodio.text = "PODIO FINAL \n\n";
+        for (int i = 0; i < data.ranking.Count; i++)
+        {
+            string medalla = i == 0 ? "" : i == 1 ? "" : i == 2 ? "" : $"{i + 1}.";
+            textoPodio.text += $"{medalla} {data.ranking[i].nombre} - {data.ranking[i].tiempo:F2}s\n";
+        }
     }
 
-    public void Reiniciar()
+    public void ReiniciarJuego()
     {
-        // Vuelve al menú principal
-        SceneManager.LoadScene("MenuPrincipal");
+        data.ReiniciarDatos();
+        MostrarPanelInicio();
+    }
+
+    private void OcultarTodosLosPaneles()
+    {
+        panelInicio.SetActive(false);
+        panelNumeroJugadores.SetActive(false);
+        panelNombreJugador.SetActive(false);
+        panelControles.SetActive(false);
+        panelPodio.SetActive(false);
+    }
+    public void MostrarControles()
+    {
+        if (panelControles != null) panelControles.SetActive(true);
+    }
+
+    public void CerrarControles()
+    {
+        if (panelControles != null) panelControles.SetActive(false);
     }
 }

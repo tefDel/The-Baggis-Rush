@@ -5,7 +5,7 @@ public class MusicTimer : MonoBehaviour
 {
     [Header("Música")]
     public AudioSource musica;
-    public float tiempoLimite = 60f; // empieza en 1 minuto
+    public float tiempoLimite; // empieza en 1 minuto
     public float tiempoAcelerar = 20f;
     public float pitchMax = 1.5f;
 
@@ -72,6 +72,12 @@ public class MusicTimer : MonoBehaviour
 
             if (dialogueManager != null)
                 dialogueManager.SendMessage("EndConversation");
+
+            MovimientoPJ movimiento = FindObjectOfType<MovimientoPJ>();
+            if (movimiento != null)
+            {
+                movimiento.enabled = false;
+            }
         }
     }
 
@@ -119,5 +125,15 @@ public class MusicTimer : MonoBehaviour
     {
         Scene currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.name);
+    }
+    public void AgregarTiempo(float segundos)
+    {
+        tiempoRestante += segundos;
+
+        // opcional: evitar que pase del tiempo límite inicial
+        if (tiempoRestante > tiempoLimite)
+            tiempoRestante = tiempoLimite;
+
+        ActualizarTexto();
     }
 }

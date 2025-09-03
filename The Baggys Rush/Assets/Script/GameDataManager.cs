@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class GameDataManager : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class GameDataManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
         }
         else
         {
@@ -28,11 +30,46 @@ public class GameDataManager : MonoBehaviour
         }
     }
 
+    // .JSON AUTOMÁTICO 
     public void GuardarResultado(string nombre, int edad, string email, string ciudad, float tiempo)
     {
         ranking.Add(new JugadorResultado(nombre, edad, email, ciudad, tiempo));
         ranking.Sort((a, b) => a.Tiempo.CompareTo(b.Tiempo)); // menor tiempo primero
         jugadoresRegistrados++;
+
+    }
+
+    public void GuardarRankingEnJson()
+    {
+        Ranking wrapper = new Ranking { ranking = ranking };
+        string json = JsonUtility.ToJson(wrapper, true);
+
+        string path = Path.Combine(Application.persistentDataPath, "ranking.json");
+        File.WriteAllText(path, json);
+
+        Debug.Log("Ranking guardado en: " + path);
+    }
+
+
+    public void CargarRankingDesdeJson()
+    {
+        string path = Path.Combine(Application.persistentDataPath, "ranking.json");
+
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            Ranking datos = JsonUtility.FromJson<Ranking>(json);
+
+            if (datos != null && datos.ranking != null)
+            {
+                ranking = datos.ranking;
+                Debug.Log("Backup cargado manualmente y aplicado al ranking.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning(" No se encontró backup en: " + path);
+        }
     }
 
     public void ReiniciarDatos()
@@ -44,5 +81,6 @@ public class GameDataManager : MonoBehaviour
         edadJugador = 0;
         emailJugador = "";
         ciudadJugador = "";
+        GuardarRankingEnJson();
     }
 }

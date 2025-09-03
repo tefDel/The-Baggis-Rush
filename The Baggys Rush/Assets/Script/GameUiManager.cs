@@ -134,6 +134,11 @@ public class GameUIManager : MonoBehaviour
         data.ReiniciarDatos();
         MostrarPanelInicio();
     }
+    public void GuardarBackupManual()
+    {
+        Debug.Log("MÉTODO GuardarBackupManual() fue llamado");
+        GameDataManager.Instance.GuardarRankingEnJson();
+    }
 
     private void OcultarTodosLosPaneles()
     {

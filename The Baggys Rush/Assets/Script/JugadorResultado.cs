@@ -9,6 +9,10 @@ public class JugadorResultado
     public string Ciudad;
     public float Tiempo;
 
+    public JugadorResultado()
+    {
+    }
+
     public JugadorResultado(string nombre, int edad, string email, string ciudad, float tiempo)
     {
         Nombre = nombre;

@@ -3,7 +3,7 @@ using UnityEngine;
 public class TimePowerUp : MonoBehaviour
 {
     [Header("Configuración del PowerUp")]
-    public float tiempoExtra = 15f; // segundos que agrega
+    public float tiempoExtra; // segundos que agrega
 
     [Header("Spawning")]
     public GameObject powerUpPrefab;       // prefab del power-up

@@ -1,22 +1,20 @@
 using System;
-using UnityEngine;
 
+[System.Serializable]
 public class JugadorResultado
 {
-    public static JugadorResultado Instance;
+    public string Nombre;
+    public int Edad;
+    public string Email;
+    public string Ciudad;
+    public float Tiempo;
 
-    public string nombre;
-    public float tiempo;
-
-    public JugadorResultado()
+    public JugadorResultado(string nombre, int edad, string email, string ciudad, float tiempo)
     {
+        Nombre = nombre;
+        Edad = edad;
+        Email = email;
+        Ciudad = ciudad;
+        Tiempo = tiempo;
     }
-
-    public JugadorResultado(string nombre, float tiempo)
-    {
-        this.nombre = nombre;
-        this.tiempo = tiempo;
-    }
-
-   
 }

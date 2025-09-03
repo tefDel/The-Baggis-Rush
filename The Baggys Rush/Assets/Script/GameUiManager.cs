@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Text.RegularExpressions;
 
 public class GameUIManager : MonoBehaviour
 {
@@ -14,8 +15,12 @@ public class GameUIManager : MonoBehaviour
     [Header("UI Elements")]
     public TMP_InputField inputNumeroJugadores;
     public TMP_InputField inputNombre;
+    public TMP_InputField inputEdad;
+    public TMP_InputField inputEmail;
+    public TMP_InputField inputCiudad;
     public TextMeshProUGUI textoPodio;
     public TextMeshProUGUI textoJugadorActual;
+    public TextMeshProUGUI textoError; 
 
     private GameDataManager data;
 
@@ -24,6 +29,7 @@ public class GameUIManager : MonoBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         data = GameDataManager.Instance;
+
         if (data.totalJugadores == 0)
         {
             MostrarPanelInicio();
@@ -70,16 +76,41 @@ public class GameUIManager : MonoBehaviour
 
         int jugadorActual = data.jugadoresRegistrados + 1;
         textoJugadorActual.text = $"Jugador {jugadorActual} de {data.totalJugadores}";
+
         inputNombre.text = "";
+        inputEdad.text = "";
+        inputEmail.text = "";
+        inputCiudad.text = "";
+        if (textoError != null) textoError.text = "";
     }
 
     public void ConfirmarNombreYCargarJuego()
     {
-        data.nombreJugador = string.IsNullOrEmpty(inputNombre.text.Trim())
-            ? "Jugador " + (data.jugadoresRegistrados + 1)
-            : inputNombre.text.Trim();
+        // Validar campos
+        if (string.IsNullOrWhiteSpace(inputNombre.text) ||
+            !int.TryParse(inputEdad.text, out int edadTemp) || edadTemp <= 0 ||
+            string.IsNullOrWhiteSpace(inputCiudad.text) ||
+            !EsEmailValido(inputEmail.text))
+        {
+            if (textoError != null)
+                textoError.text = "* Por favor completa los campos correctamente.";
+            return; 
+        }
 
-        SceneManager.LoadScene("SampleScene"); // 👉 Normal, no aditivo
+        data.nombreJugador = inputNombre.text.Trim();
+        data.edadJugador = edadTemp;
+        data.emailJugador = inputEmail.text.Trim();
+        data.ciudadJugador = inputCiudad.text.Trim();
+
+        SceneManager.LoadScene("SampleScene");
+    }
+
+    private bool EsEmailValido(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return false;
+        // Regex simple para validar email
+        string patron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        return Regex.IsMatch(email, patron);
     }
 
     public void MostrarPodio()
@@ -87,11 +118,14 @@ public class GameUIManager : MonoBehaviour
         OcultarTodosLosPaneles();
         panelPodio.SetActive(true);
 
-        textoPodio.text = "PODIO FINAL \n\n";
+        textoPodio.text = "🏆 PODIO FINAL 🏆\n\n";
         for (int i = 0; i < data.ranking.Count; i++)
         {
-            string medalla = i == 0 ? "" : i == 1 ? "" : i == 2 ? "" : $"{i + 1}.";
-            textoPodio.text += $"{medalla} {data.ranking[i].nombre} - {data.ranking[i].tiempo:F2}s\n";
+            string medalla = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : $"{i + 1}.";
+            var jugador = data.ranking[i];
+
+            textoPodio.text += $"{medalla} {jugador.Nombre} | Edad: {jugador.Edad} | " +
+                               $"{jugador.Ciudad} | {jugador.Email} | Tiempo {jugador.Tiempo:F2}s\n";
         }
     }
 
@@ -109,6 +143,7 @@ public class GameUIManager : MonoBehaviour
         panelControles.SetActive(false);
         panelPodio.SetActive(false);
     }
+
     public void MostrarControles()
     {
         if (panelControles != null) panelControles.SetActive(true);

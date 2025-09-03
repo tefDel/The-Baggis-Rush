@@ -63,11 +63,10 @@ public class PuertaFinal : MonoBehaviour
                 completado = true;
                 puedeAbrir = true;
 
-                // Tiempo de completado
-                // 1) Pausar timer antes de leer tiempo
+                // Pausar timer antes de leer tiempo
                 if (musicTimer != null) musicTimer.PauseTimer();
 
-                // 2) Obtener tiempo final
+                // Obtener tiempos
                 float tiempoTranscurrido = musicTimer != null ? musicTimer.GetTiempoTranscurrido() : 0f;
                 float tiempoRestante = musicTimer != null ? musicTimer.GetTiempoRestante() : 0f;
 
@@ -75,14 +74,32 @@ public class PuertaFinal : MonoBehaviour
 
                 string tiempoTexto = FormatearTiempo(tiempoTranscurrido);
 
-                // 3) Mostrar mensaje de victoria
+                // Mostrar mensaje de victoria
                 MostrarMensaje(msgVictoria + tiempoTexto, 10f);
 
-                // 4) Guardar en GameUIManager (esto alimenta el ranking)
-                GameDataManager.Instance.GuardarResultado(GameDataManager.Instance.nombreJugador, tiempoTranscurrido);
+                // --- Guardar en GameDataManager usando LOS DATOS REALES del jugador ---
+                if (GameDataManager.Instance != null)
+                {
+                    var gdm = GameDataManager.Instance;
 
+                    // Debug para confirmar qué valores se guardarán
+                    Debug.Log($"[PuertaFinal] Guardando resultado: nombre='{gdm.nombreJugador}', edad={gdm.edadJugador}, email='{gdm.emailJugador}', ciudad='{gdm.ciudadJugador}', tiempo={tiempoTranscurrido}");
 
-                // 5) Volver al menú
+                    // Usa los campos guardados en el GameDataManager (rellenados por tu UI)
+                    gdm.GuardarResultado(
+                        string.IsNullOrEmpty(gdm.nombreJugador) ? "Jugador" : gdm.nombreJugador,
+                        gdm.edadJugador,
+                        string.IsNullOrEmpty(gdm.emailJugador) ? "Sin email" : gdm.emailJugador,
+                        string.IsNullOrEmpty(gdm.ciudadJugador) ? "Sin ciudad" : gdm.ciudadJugador,
+                        tiempoTranscurrido
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("[PuertaFinal] GameDataManager.Instance es null. No se guardó el resultado.");
+                }
+
+                // Volver al menú
                 StartCoroutine(RegresarAlMenu());
             }
         }
@@ -110,7 +127,7 @@ public class PuertaFinal : MonoBehaviour
         mensajeCoroutine = StartCoroutine(EsconderMensaje(duracion));
     }
 
-    System.Collections.IEnumerator EsconderMensaje(float segundos)
+    IEnumerator EsconderMensaje(float segundos)
     {
         if (segundos > 0f)
         {
@@ -128,7 +145,7 @@ public class PuertaFinal : MonoBehaviour
 
     private IEnumerator RegresarAlMenu()
     {
-        yield return new WaitForSeconds(1f); // Espera 3 seg para que el jugador vea el mensaje
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu Inicial"); // Reemplaza "Menu" con el nombre real de tu escena
+        yield return new WaitForSeconds(1f);
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu Inicial");
     }
 }

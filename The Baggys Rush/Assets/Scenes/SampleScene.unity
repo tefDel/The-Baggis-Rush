@@ -18037,7 +18037,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1966fa03df675d4c9dd65e94d808578, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tiempoExtra: 15
+  tiempoExtra: 10
   powerUpPrefab: {fileID: 1674603997}
   spawnPoints:
   - {fileID: 1928275478}
@@ -18047,7 +18047,7 @@ MonoBehaviour:
   - {fileID: 178186610}
   - {fileID: 589003863}
   - {fileID: 1237034113}
-  spawnInterval: 10
+  spawnInterval: 20
 --- !u!4 &2102629399
 Transform:
   m_ObjectHideFlags: 0
@@ -18536,10 +18536,10 @@ SceneRoots:
   - {fileID: 1270443974}
   - {fileID: 97384762}
   - {fileID: 1718732879}
-  - {fileID: 232091971}
   - {fileID: 1058261473}
   - {fileID: 2102629399}
   - {fileID: 1955833134}
   - {fileID: 6337887297846294414}
   - {fileID: 724640364}
   - {fileID: 521961346}
+  - {fileID: 232091971}

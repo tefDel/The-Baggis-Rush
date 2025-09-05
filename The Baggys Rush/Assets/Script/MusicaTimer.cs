@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+
 public class MusicTimer : MonoBehaviour
 {
     [Header("Música")]
     public AudioSource musica;
-    public float tiempoLimite; // empieza en 1 minuto
+    public float tiempoLimite = 60f; // 1 minuto
     public float tiempoAcelerar = 20f;
     public float pitchMax = 1.5f;
 
@@ -21,19 +22,27 @@ public class MusicTimer : MonoBehaviour
     public TextMeshProUGUI mensajeUI;
     public string msgPerder = "Uy... perdiste tu vuelo. :( \n¿Reintentar?";
 
+    [Header("Opciones")]
+    public bool iniciarPausado = true; // 👈 ahora por defecto en pausa
+
     private float tiempoRestante;
-    private bool isRunning = true;
+    private bool isRunning = false; // 👈 por defecto apagado
     public DialogoManager dialogueManager;
 
     void Start()
     {
         ResetTimer();
+
+        if (iniciarPausado)
+            PauseTimer();
+
         if (musica != null)
         {
             musica.loop = true;
             musica.pitch = 1f;
-            musica.Play();
+            musica.Stop(); // 👈 no empieza sonando
         }
+
         ActualizarTexto();
     }
 
@@ -57,27 +66,21 @@ public class MusicTimer : MonoBehaviour
             isRunning = false;
             Debug.Log("[MusicTimer] Tiempo terminado.");
 
-            // mensaje de derrota
             if (panelMensajes != null && mensajeUI != null)
             {
                 panelMensajes.SetActive(true);
                 mensajeUI.text = msgPerder;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-
             }
 
-            // si quieres parar música
             if (musica != null) musica.Stop();
 
             if (dialogueManager != null)
                 dialogueManager.SendMessage("EndConversation");
 
             MovimientoPJ movimiento = FindObjectOfType<MovimientoPJ>();
-            if (movimiento != null)
-            {
-                movimiento.enabled = false;
-            }
+            if (movimiento != null) movimiento.enabled = false;
         }
     }
 
@@ -88,7 +91,6 @@ public class MusicTimer : MonoBehaviour
         int minutos = Mathf.FloorToInt(tiempoRestante / 60f);
         int segundos = Mathf.FloorToInt(tiempoRestante % 60f);
 
-        // siempre mostramos TIEMPO RESTANTE en pantalla
         textoTimer.text = string.Format("{0:00}:{1:00}", minutos, segundos);
 
         if (tiempoRestante <= tiempoAcelerar)
@@ -106,17 +108,29 @@ public class MusicTimer : MonoBehaviour
         }
     }
 
-    // Getters públicos
+    // Getters
     public float GetTiempoRestante() => tiempoRestante;
     public float GetTiempoTranscurrido() => Mathf.Clamp(tiempoLimite - tiempoRestante, 0f, tiempoLimite);
 
     // Control del timer
-    public void StartTimer() { isRunning = true; }
-    public void PauseTimer() { isRunning = false; }
+    public void StartTimer()
+    {
+        isRunning = true;
+        if (musica != null && !musica.isPlaying)
+            musica.Play(); // 👈 ahora sí empieza aquí
+    }
+
+    public void PauseTimer()
+    {
+        isRunning = false;
+        if (musica != null && musica.isPlaying)
+            musica.Pause();
+    }
+
     public void ResetTimer()
     {
         tiempoRestante = tiempoLimite;
-        isRunning = true;
+        isRunning = false; 
         if (musica != null) musica.pitch = 1f;
         ActualizarTexto();
     }
@@ -126,11 +140,10 @@ public class MusicTimer : MonoBehaviour
         Scene currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.name);
     }
+
     public void AgregarTiempo(float segundos)
     {
         tiempoRestante += segundos;
-
-        // opcional: evitar que pase del tiempo límite inicial
         if (tiempoRestante > tiempoLimite)
             tiempoRestante = tiempoLimite;
 

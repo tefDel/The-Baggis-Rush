@@ -1,24 +1,25 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class TimePowerUp : MonoBehaviour
 {
-    [Header("Configuración del PowerUp")]
-    public float tiempoExtra; // segundos que agrega
+    [Header("ConfiguraciÃ³n del PowerUp")]
+    public float tiempoExtra;
 
     [Header("Spawning")]
-    public GameObject powerUpPrefab;       // prefab del power-up
-    public Transform[] spawnPoints;        // lugares posibles en la casa
-    public float spawnInterval = 30f;      // cada cuánto aparece uno
+    public GameObject powerUpPrefab;
+    public Transform[] spawnPoints;
+    public float spawnInterval = 30f;
+
+    [Header("Audio")]
+    public AudioClip sonidoPickup;
 
     private float timer;
-    private GameObject currentPowerUp; // referencia al power-up activo
+    private GameObject currentPowerUp;
 
     void Update()
     {
-        // control del spawn cada cierto tiempo
         timer += Time.deltaTime;
 
-        // solo spawnea si no hay ninguno en la escena
         if (timer >= spawnInterval && currentPowerUp == null)
         {
             SpawnPowerUp();
@@ -33,7 +34,6 @@ public class TimePowerUp : MonoBehaviour
         int index = Random.Range(0, spawnPoints.Length);
         currentPowerUp = Instantiate(powerUpPrefab, spawnPoints[index].position, Quaternion.identity);
 
-        // añadir el trigger detector directamente al prefab instanciado
         Collider col = currentPowerUp.GetComponent<Collider>();
         if (col == null)
         {
@@ -41,42 +41,128 @@ public class TimePowerUp : MonoBehaviour
             col.isTrigger = true;
         }
 
-        // añadir componente dinámico para detectar recogida
-        currentPowerUp.AddComponent<PowerUpPickup>().Init(this, tiempoExtra);
+        AudioSource audioSource = currentPowerUp.GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = currentPowerUp.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
+
+        LevitateAndRotate levitate = currentPowerUp.AddComponent<LevitateAndRotate>();
+
+        PowerUpPickup pickup = currentPowerUp.AddComponent<PowerUpPickup>();
+        pickup.Init(this, tiempoExtra, sonidoPickup, audioSource);
     }
 
-    // llamado por el objeto al ser recogido
     public void OnPowerUpCollected()
     {
         currentPowerUp = null;
     }
-}
 
-// Script interno para manejar la recogida
-public class PowerUpPickup : MonoBehaviour
-{
-    private TimePowerUp manager;
-    private float extraTime;
-
-    public void Init(TimePowerUp manager, float tiempo)
+    private class LevitateAndRotate : MonoBehaviour
     {
-        this.manager = manager;
-        this.extraTime = tiempo;
+        public float rotationSpeed = 50f;
+        public float floatAmplitude = 0.25f;
+        public float floatFrequency = 2f;
+
+        private Vector3 startPos;
+
+        void Start()
+        {
+            startPos = transform.position;
+        }
+
+        void Update()
+        {
+            // RotaciÃ³n
+            transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime, Space.World);
+
+            // Movimiento flotante
+            float newY = startPos.y + Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
+            transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+        }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private class PowerUpPickup : MonoBehaviour
     {
-        if (other.CompareTag("Player"))
+        private TimePowerUp manager;
+        private float extraTime;
+        private AudioClip sonidoPickup;
+        private AudioSource audioSource;
+        private bool collected = false;
+
+        public void Init(TimePowerUp manager, float tiempo, AudioClip sonido, AudioSource source)
         {
-            MusicTimer timer = FindObjectOfType<MusicTimer>();
-            if (timer != null)
+            this.manager = manager;
+            this.extraTime = tiempo;
+            this.sonidoPickup = sonido;
+            this.audioSource = source;
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (collected) return; 
+
+            if (other.CompareTag("Player"))
             {
-                timer.AgregarTiempo(extraTime);
+                collected = true;
+
+                MusicTimer timer = FindObjectOfType<MusicTimer>();
+                if (timer != null)
+                {
+                    timer.AgregarTiempo(extraTime);
+                }
+
+                if (sonidoPickup != null && audioSource != null)
+                {
+                    audioSource.PlayOneShot(sonidoPickup);
+                }
+
+                manager.OnPowerUpCollected();
+
+                StartCoroutine(DesaparecerAnimacion());
+            }
+        }
+
+        private System.Collections.IEnumerator DesaparecerAnimacion()
+        {
+            float duration = 0.5f; 
+            float elapsed = 0f;
+
+            Vector3 originalScale = transform.localScale;
+            Vector3 popScale = originalScale * 1.2f; 
+
+            float popTime = 0.15f;
+            while (elapsed < popTime)
+            {
+                float t = elapsed / popTime;
+                transform.localScale = Vector3.Lerp(originalScale, popScale, t);
+                elapsed += Time.deltaTime;
+                yield return null;
             }
 
-            manager.OnPowerUpCollected();
+            elapsed = 0f;
+            Vector3 endScale = Vector3.zero;
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            Color startColor = sr != null ? sr.color : Color.white;
+
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+
+                transform.localScale = Vector3.Lerp(popScale, endScale, t);
+                transform.Rotate(Vector3.up * 500f * Time.deltaTime);
+                if (sr != null)
+                {
+                    sr.color = Color.Lerp(startColor, new Color(startColor.r, startColor.g, startColor.b, 0), t);
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
             Destroy(gameObject);
         }
     }
 }
-
